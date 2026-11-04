@@ -45,7 +45,8 @@ body{margin:0}
 }
 [hidden]{display:none!important}
 html,body{height:100%}
-body{background:var(--abismo);color:var(--tinta);font:var(--lectura);overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{background:var(--abismo);color:var(--tinta);font:var(--lectura);overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#campo{-webkit-user-select:text;user-select:text}
 h2,p,ul{margin:0;padding:0}
 
 #fondo{position:fixed;inset:-12%;z-index:0;pointer-events:none;
@@ -444,7 +445,7 @@ body.en-pausa #agua{z-index:6}
   }
   function sembrar(){
     var n = window.innerWidth < 700 ? 2700 : 3600;
-    for (var i=0;i<n;i++) P.push({a:Math.random(), b:Math.random(), c:Math.random(), d:Math.random(), e:Math.random(), ox:0, oy:0, tam:Math.random() * .6 + 1.3});
+    for (var i=0;i<n;i++) P.push({a:Math.random(), b:Math.random(), c:Math.random(), d:Math.random(), e:Math.random(), ox:0, oy:0, vx:0, vy:0, tam:Math.random() * .6 + 1.3});
   }
   function rotar(x, y, a){ var c = Math.cos(a), s = Math.sin(a); T.x = x * c - y * s; T.y = x * s + y * c; }
 
@@ -562,6 +563,37 @@ body.en-pausa #agua{z-index:6}
     pasarA(ESCENAS[escena]);
   }
 
+  // reacción al dedo: cada toque manda una onda y el dedo apoyado aparta las partículas; un resorte las devuelve
+  var VEL_ONDA = 330, ANCHO_ONDA = 74, FUERZA_ONDA = 1200, RADIO_DEDO = 120, FUERZA_DEDO = 1700, RESORTE = 24, FRENO = 3.6;
+  var dedos = {}, listaDedos = [];
+  function reaccionar(p, x, y, dt, freno){
+    var j, o, px = x + p.ox, py = y + p.oy, dx, dy, d2, d;
+    for (j=0;j<ondas.length;j++){
+      o = ondas[j];
+      dx = px - o.x; dy = py - o.y; d2 = dx*dx + dy*dy;
+      var ra = o.e * VEL_ONDA, lim = ra + ANCHO_ONDA;
+      if (d2 > lim * lim) continue;
+      d = Math.sqrt(d2) || 1;
+      var ba = Math.abs(d - ra);
+      if (ba < ANCHO_ONDA){
+        var fu = (1 - ba / ANCHO_ONDA) * (1 - o.e / o.vida) * FUERZA_ONDA * o.f * dt;
+        p.vx += dx / d * fu; p.vy += dy / d * fu;
+      }
+    }
+    for (j=0;j<listaDedos.length;j++){
+      o = listaDedos[j];
+      dx = px - o.x; dy = py - o.y; d2 = dx*dx + dy*dy;
+      if (d2 > RADIO_DEDO * RADIO_DEDO) continue;
+      d = Math.sqrt(d2) || 1;
+      var ce = 1 - d / RADIO_DEDO, em = ce * ce * FUERZA_DEDO * dt;
+      p.vx += dx / d * em + o.vx * ce * 5 * dt;
+      p.vy += dy / d * em + o.vy * ce * 5 * dt;
+    }
+    p.vx += -p.ox * RESORTE * dt; p.vy += -p.oy * RESORTE * dt;
+    p.vx *= freno; p.vy *= freno;
+    p.ox += p.vx * dt; p.oy += p.vy * dt;
+  }
+
   function dibujar(ahora){
     var dt = previo ? Math.min((ahora - previo) / 1000, .05) : .016; previo = ahora;
     tiempo += dt * (calma ? .3 : 1);
@@ -574,17 +606,19 @@ body.en-pausa #agua{z-index:6}
     }
 
     g.clearRect(0, 0, W, H);
-    var i, o, cajas = [];
-    for (i=0;i<COLORES.length*2;i++) cajas.push(new Path2D());
+    var i, o, cajas = [], rastros = [];
+    for (i=0;i<COLORES.length*2;i++){ cajas.push(new Path2D()); rastros.push(new Path2D()); }
     for (i=ondas.length-1;i>=0;i--){ o = ondas[i]; o.e += dt; if (o.e > o.vida) ondas.splice(i, 1); }
 
-    var el = tiempo - cambio, suelta = Math.pow(.08, dt);
+    var el = tiempo - cambio, freno = Math.exp(-FRENO * dt);
+    listaDedos = enPausa ? [] : Object.keys(dedos).map(function(k){ return dedos[k]; });
     for (i=0;i<P.length;i++){
       var p = P[i], x, y, c;
       // estrellitas sueltas que titilan por toda la pantalla
       if (!enPausa && i % 7 === 0){
         var luz = Math.sin(tiempo * (.6 + p.c) + p.d * 6.3);
-        cajas[luz > .3 ? (p.e < .7 ? 0 : 2) : (p.e < .7 ? 1 : 3)].rect(p.a * W, p.b * H, 1.2, 1.2);
+        reaccionar(p, p.a * W, p.b * H, dt, freno);
+        cajas[luz > .3 ? (p.e < .7 ? 0 : 2) : (p.e < .7 ? 1 : 3)].rect(p.a * W + p.ox, p.b * H + p.oy, 1.2, 1.2);
         continue;
       }
       var tr = (el - p.d * DEMORA) / MUEVE;
@@ -600,41 +634,49 @@ body.en-pausa #agua{z-index:6}
         y = ay + (T.y - ay) * e + nube * (p.b - .5) * 46;
         c = e > p.c ? T.c : ac;
       }
-      for (var j=0;j<ondas.length;j++){
-        o = ondas[j];
-        var dx = x + p.ox - o.x, dy = y + p.oy - o.y, d = Math.sqrt(dx*dx + dy*dy) || 1, ra = o.e * 280, ba = Math.abs(d - ra);
-        if (ba < 60){ var fu = (1 - ba / 60) * 3.4 * (1 - o.e / o.vida); p.ox += dx / d * fu; p.oy += dy / d * fu; }
-      }
-      p.ox *= suelta; p.oy *= suelta;
+      reaccionar(p, x, y, dt, freno);
       if (enPausa){
         if (i % 3) continue;
         cajas[c * 2 + (p.c < .5 ? 1 : 0)].rect(x, y, 1.1, 1.1);
       } else {
-        cajas[c * 2 + (p.c < .36 ? 1 : 0)].rect(x + p.ox, y + p.oy, p.tam, p.tam);
+        var cl = c * 2 + (p.c < .36 ? 1 : 0), sx = x + p.ox, sy = y + p.oy, v2 = p.vx * p.vx + p.vy * p.vy;
+        if (v2 > 3600){
+          // empujadas por el dedo dejan una estela corta, como en la referencia
+          var es = Math.min(.025, 6 / Math.sqrt(v2));
+          rastros[cl].moveTo(sx, sy); rastros[cl].lineTo(sx - p.vx * es, sy - p.vy * es);
+        } else {
+          cajas[cl].rect(sx, sy, p.tam, p.tam);
+        }
       }
     }
     g.globalCompositeOperation = 'lighter';
     for (i=0;i<cajas.length;i++){
       g.globalAlpha = (i & 1) ? .6 : .95;
       g.fillStyle = COLORES[i >> 1]; g.fill(cajas[i]);
+      g.strokeStyle = COLORES[i >> 1]; g.lineWidth = 1.1; g.stroke(rastros[i]);
     }
     g.globalAlpha = 1;
     for (i=0;i<ondas.length;i++){
       o = ondas[i];
-      g.strokeStyle = 'rgba(134,216,255,' + (.3 * (1 - o.e / o.vida)) + ')';
+      var ve = 1 - o.e / o.vida, ani = (1 - Math.pow(1 - o.e / o.vida, 2.2)) * 92 * o.f + 7;
       g.lineWidth = 1;
-      g.beginPath(); g.arc(o.x, o.y, Math.max(1, o.e * 280), 0, 6.2832); g.stroke();
+      g.strokeStyle = 'rgba(134,216,255,' + (.42 * ve) + ')';
+      g.beginPath(); g.arc(o.x, o.y, ani, 0, 6.2832); g.stroke();
+      g.beginPath(); g.arc(o.x, o.y, ani * .93, 0, 6.2832); g.stroke();
+      g.strokeStyle = 'rgba(134,216,255,' + (.3 * ve) + ')';
+      g.beginPath(); g.arc(o.x, o.y, ani * .52, 0, 6.2832); g.stroke();
     }
     requestAnimationFrame(dibujar);
   }
-  function onda(x, y){
-    if (ondas.length > 3) ondas.shift();
-    ondas.push({x:x, y:y, e:0, vida:1.6});
+  function onda(x, y, f){
+    if (ondas.length > 4) ondas.shift();
+    ondas.push({x:x, y:y, e:0, vida:1.5, f:f || 1});
   }
 
   // las criaturas siempre viven por encima del texto de la pantalla
   function medirZona(){
     var pant = pantalla(actual), pri = pant.querySelector('.marco').firstElementChild;
+    pant.style.touchAction = pant.scrollHeight > pant.clientHeight + 1 ? 'pan-y' : 'none';
     var tope = pri.getBoundingClientRect().top - 18, ini = 54;
     tope = Math.max(tope, ini + 30);
     Zd.cx = W / 2; Zd.cy = (ini + tope) / 2;
@@ -652,7 +694,7 @@ body.en-pausa #agua{z-index:6}
     cambiando = true;
     var ant = pantalla(actual), sig = pantalla(id);
     if (!volviendo) historial.push(actual);
-    onda(W / 2, H * .72);
+    onda(W / 2, H * .72, .7);
     campana(nota(), .045);
     siguienteEscena();
     mostrarAtras(id);
@@ -695,6 +737,7 @@ body.en-pausa #agua{z-index:6}
   var cualPregunta = 0, listaDesde = 0, flota = null, cambiandoFlota = false, flotas = document.getElementById('flotas'), seguirAgua = document.getElementById('seguirAgua'), pista = document.getElementById('pista');
   function limpiarFlota(){
     if (flota){ flota.remove(); flota = null; }
+    flotas.textContent = '';
   }
   function mostrarPregunta(cx, cy){
     var el = document.createElement('div'), ancho = Math.min(W - 48, 290);
@@ -719,14 +762,10 @@ body.en-pausa #agua{z-index:6}
   window.addEventListener('pointerdown', function(e){
     if (e.target.closest && e.target.closest('button,a,input,label,#pausa')) return;
     iniciarSonido();
-    // después de la cuarta frase, tocar la pantalla es como apretar Seguir
-    if (actual === 'tocar' && cualPregunta >= PREGUNTAS.length){
-      if (Date.now() - listaDesde > 700) ir('invitacion');
-      return;
-    }
+    dedos[e.pointerId] = {x:e.clientX, y:e.clientY, vx:0, vy:0, t:performance.now(), rx:e.clientX, ry:e.clientY, viaje:0, ini:Date.now()};
     onda(e.clientX, e.clientY);
     campana(nota(), .06);
-    if (actual !== 'tocar' || cambiandoFlota) return;
+    if (actual !== 'tocar' || cualPregunta >= PREGUNTAS.length || cambiandoFlota) return;
     if (flota){
       cambiandoFlota = true;
       flota.classList.remove('ver'); flota.classList.add('va');
@@ -740,6 +779,33 @@ body.en-pausa #agua{z-index:6}
       mostrarPregunta(e.clientX, e.clientY);
     }
   });
+
+  window.addEventListener('pointermove', function(e){
+    var d = dedos[e.pointerId];
+    if (!d) return;
+    var ahora = performance.now(), dtp = Math.max((ahora - d.t) / 1000, .004), mx = e.clientX - d.x, my = e.clientY - d.y;
+    d.vx += (mx / dtp - d.vx) * .4; d.vy += (my / dtp - d.vy) * .4;
+    d.vx = Math.max(-1500, Math.min(1500, d.vx)); d.vy = Math.max(-1500, Math.min(1500, d.vy));
+    d.x = e.clientX; d.y = e.clientY; d.t = ahora;
+    d.viaje += Math.abs(mx) + Math.abs(my);
+    var rx = d.x - d.rx, ry = d.y - d.ry;
+    if (rx * rx + ry * ry > 9000){ onda(d.x, d.y, .55); d.rx = d.x; d.ry = d.y; }
+  });
+  function soltar(e){
+    var d = dedos[e.pointerId];
+    if (!d) return;
+    delete dedos[e.pointerId];
+    // después de la cuarta frase, el siguiente toque la hace desaparecer; para avanzar hay que apretar Seguir
+    if (e.type === 'pointerup' && actual === 'tocar' && flota && cualPregunta >= PREGUNTAS.length && d.ini - listaDesde > 700){
+      var ultima = flota;
+      flota = null;
+      ultima.style.transition = 'opacity 1s ease';
+      ultima.classList.remove('ver');
+      setTimeout(function(){ ultima.remove(); }, 1000);
+    }
+  }
+  window.addEventListener('pointerup', soltar);
+  window.addEventListener('pointercancel', soltar);
 
   // ---- hacer la pausa: oscuridad, una frase y partículas chiquitas flotando ----
   var pausaEl = document.getElementById('pausa');
