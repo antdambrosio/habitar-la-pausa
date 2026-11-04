@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Habitar la pausa</title>
+<meta name="description" content="Una experiencia inmersiva para volver al presente y despertar los sentidos.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_AR">
+<meta property="og:title" content="Habitar la pausa">
+<meta property="og:description" content="Una experiencia inmersiva para volver al presente y despertar los sentidos.">
+<meta property="og:url" content="https://antdambrosio.github.io/habitar-la-pausa/">
+<meta property="og:image" content="https://antdambrosio.github.io/habitar-la-pausa/preview.jpg">
+<meta property="og:image:secure_url" content="https://antdambrosio.github.io/habitar-la-pausa/preview.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Habitar la pausa: 18 de noviembre, de 14 a 20 horas, Sala Inmersiva, Palacio Libertad">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://antdambrosio.github.io/habitar-la-pausa/preview.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,300;0,400;1,300&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+
+/* Agua oscura con aurora: las mismas partículas arman y desarman criaturas arriba, el texto vive abajo y cada botón lleva a otra pantalla */
+:root{
+  --abismo:#02060b;
+  --tinta:#e9f4f1;
+  --niebla:#a9c0c6;
+  --aurora:#5fe6b4;
+  --celeste:#86d8ff;
+  --lila:#c2a6ff;
+  --carta:#16181d;
+  --digito:#dcdfe2;
+  --familia:"Josefin Sans","Futura","Century Gothic",system-ui,sans-serif;
+  /* solo dos estilos: titular y lectura. --chica es lectura a menor tamaño */
+  --titular:italic 300 25px/1.2 var(--familia);
+  --lectura:normal 300 16px/1.36 var(--familia);
+  --chica:normal 300 13px/1.3 var(--familia);
+  --entra:cubic-bezier(.12,.72,.2,1);
+  --sale:cubic-bezier(.7,0,.9,.35);
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--abismo);color:var(--tinta);font:var(--lectura);overflow:hidden;-webkit-tap-highlight-color:transparent}
+h2,p,ul{margin:0;padding:0}
+
+#fondo{position:fixed;inset:-12%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(46% 30% at 52% 14%,rgba(30,150,118,.46),rgba(30,150,118,0) 72%),
+    radial-gradient(52% 28% at 24% 90%,rgba(112,30,128,.44),rgba(112,30,128,0) 74%),
+    linear-gradient(to bottom,#061b24 0%,#0a1534 46%,#100d2d 74%,#07060f 100%);
+  animation:deriva 26s ease-in-out infinite alternate}
+@keyframes deriva{to{transform:translate3d(3%,-3%,0) scale(1.06)}}
+#agua{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;touch-action:manipulation;pointer-events:none}
+body.en-pausa #agua{z-index:6}
+#velo{position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(to top,rgba(2,6,11,.82),rgba(2,6,11,.42) 42%,rgba(2,6,11,0) 66%)}
+
+.pantalla{position:fixed;inset:0;z-index:1;display:block;overflow-y:auto;
+  padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));
+  padding-top:calc(60px + env(safe-area-inset-top,0px));padding-bottom:calc(26px + env(safe-area-inset-bottom,0px))}
+.pantalla:focus{outline:none}
+.marco{max-width:440px;min-height:100%;margin-inline:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:18px}
+.cuerpo{display:flex;flex-direction:column;gap:10px;min-width:0}
+
+.marco > *{--n:0}
+.marco > *:nth-child(2){--n:1}
+.marco > *:nth-child(3){--n:2}
+.pantalla.entra .marco > *{animation:entrar .8s var(--entra) both;animation-delay:calc(var(--n) * 90ms)}
+.pantalla.sale .marco > *{animation:salir .36s var(--sale) both}
+@keyframes entrar{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes salir{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-20px)}}
+
+.titular{font:var(--titular);text-wrap:balance;overflow-wrap:anywhere}
+.lectura{font:var(--lectura);text-wrap:pretty}
+.nota{font:var(--chica);color:var(--niebla)}
+.destacado{color:var(--aurora)}
+
+.boton{font:var(--lectura);font-weight:400;white-space:nowrap;text-decoration:none;color:var(--abismo);background:var(--aurora);border:1px solid var(--aurora);border-radius:999px;padding:9px 18px 6px;cursor:pointer;text-align:center;box-sizing:border-box}
+.boton.hueco{background:rgba(2,6,11,.55);color:var(--tinta);border-color:rgba(233,244,241,.35)}
+.boton.ancho{width:100%}
+.boton:focus-visible,.icono:focus-visible,#volver:focus-visible{outline:2px solid var(--celeste);outline-offset:3px}
+.boton:active{transform:scale(.97)}
+.acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.acciones .boton{flex:1 1 auto}
+
+.icono{position:fixed;z-index:3;top:calc(12px + env(safe-area-inset-top,0px));font:var(--chica);font-weight:400;color:var(--tinta);background:rgba(2,6,11,.55);border:1px solid rgba(233,244,241,.3);border-radius:999px;padding:7px 12px 4px;cursor:pointer}
+#sonido{right:max(12px,env(safe-area-inset-right,0px))}
+#atras{left:max(12px,env(safe-area-inset-left,0px))}
+
+#pedir{display:flex;flex-direction:column;gap:10px}
+.fila{display:flex;gap:10px;align-items:center}
+#campo{flex:1;min-width:0;font:var(--lectura);color:var(--tinta);background:rgba(2,6,11,.55);border:0;border-bottom:1px solid rgba(233,244,241,.5);border-radius:0;padding:7px 4px 4px;outline:none}
+#campo:focus{border-bottom-color:var(--aurora)}
+#campo::placeholder{color:var(--niebla)}
+
+#tocar .cuerpo{gap:3px}
+.pista{animation:latido 3.4s ease-in-out infinite}
+@keyframes latido{50%{opacity:.35}}
+#seguirAgua{visibility:hidden;opacity:0;transition:opacity 1.2s ease}
+#seguirAgua.ver{visibility:visible;opacity:1}
+.flota{position:fixed;z-index:2;left:0;top:0;pointer-events:none;font:var(--titular);text-align:center;text-wrap:balance;color:var(--tinta);text-shadow:0 0 12px rgba(2,6,11,.55),0 0 24px rgba(2,6,11,.5),0 0 40px rgba(2,6,11,.45),0 0 64px rgba(2,6,11,.4),0 0 96px rgba(2,6,11,.32),0 0 140px rgba(2,6,11,.24);opacity:0;transition:opacity 1s ease;animation:subir 110s linear forwards}
+@keyframes subir{to{transform:translateY(-660px)}}
+#saludo{font-size:30px}
+.flota.ver{opacity:1}
+.flota.va{opacity:0;transition:opacity .22s ease}
+
+.donde{display:flex;flex-direction:column;gap:0;border-left:1px solid rgba(134,216,255,.35);padding-left:12px}
+.aviso{font:var(--chica);color:var(--aurora);min-height:1.3em;overflow-wrap:anywhere}
+
+/* countdown de vidrio con cartas que giran */
+.cuenta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-width:320px;margin-top:6px}
+.cuenta.texto{display:block}
+.unidad{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.unidad small{font:var(--chica);color:var(--niebla)}
+.carta{position:relative;width:100%;height:52px;border-radius:10px;perspective:280px;background:rgba(233,244,241,.07);border:1px solid rgba(233,244,241,.13);box-sizing:border-box;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.mitad,.hoja{position:absolute;left:0;right:0;height:50%;overflow:hidden;font:var(--lectura);font-size:27px;line-height:1;color:var(--tinta);font-variant-numeric:lining-nums tabular-nums;backface-visibility:hidden}
+.mitad span,.hoja span{position:absolute;left:0;right:0;height:200%;display:flex;align-items:center;justify-content:center;padding-top:.14em;box-sizing:border-box}
+.sup{top:0}
+.sup span{top:0}
+.inf{bottom:0}
+.inf span{bottom:0}
+.mitad.sup{box-shadow:0 1px 0 rgba(2,6,11,.2)}
+.hoja{visibility:hidden}
+.gira .hoja{visibility:visible}
+.gira .hoja.sup{transform-origin:50% 100%;animation:baja1 .24s ease-in both}
+.gira .hoja.inf{transform-origin:50% 0;animation:baja2 .24s ease-out .24s both}
+.gira .mitad.sup span{animation:asoma .24s ease-in both}
+.gira .mitad.inf span{animation:apaga .2s linear .24s both}
+@keyframes baja1{from{transform:rotateX(0)}to{transform:rotateX(-90deg)}}
+@keyframes baja2{from{transform:rotateX(90deg)}to{transform:rotateX(0)}}
+@keyframes asoma{from{opacity:0}to{opacity:1}}
+@keyframes apaga{to{opacity:0}}
+
+.creditos{display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center}
+.creditos ul{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:0 10px}
+.creditos li,.creditos p{font:var(--chica);font-size:12px;color:var(--niebla)}
+
+#pausa{position:fixed;inset:0;z-index:5;background:var(--abismo);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px;text-align:center;
+  padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));opacity:0;transition:opacity 3s ease}
+#pausa.ver{opacity:1}
+#pausa p{opacity:0;transition:opacity 3s ease 2.4s}
+#pausa.ver p{opacity:1}
+#volver{font:var(--chica);color:var(--niebla);background:none;border:0;border-bottom:1px solid rgba(169,192,198,.4);padding:6px 0 3px;cursor:pointer;opacity:0;transition:opacity 2s ease 5s}
+#pausa.ver #volver{opacity:1}
+
+@media (max-height:640px){
+  .marco{gap:12px}
+  .pantalla{padding-top:calc(52px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+  #fondo,.pista{animation:none}
+  .pantalla.entra .marco > *,.pantalla.sale .marco > *{animation-duration:.01s;animation-delay:0s}
+  .gira .hoja{visibility:hidden}
+}
+</style>
+</head>
+<body>
+<div id="fondo" aria-hidden="true"></div>
+<canvas id="agua" aria-hidden="true"></canvas>
+<div id="velo" aria-hidden="true"></div>
+<div id="flotas" role="status" aria-live="polite"></div>
+<button class="icono" id="atras" type="button" hidden aria-label="Volver a la pantalla anterior">←</button>
+<button class="icono" id="sonido" type="button" hidden>Silenciar</button>
+
+<main>
+  <section class="pantalla" id="nombre" tabindex="-1">
+    <div class="marco">
+      <form class="cuerpo" id="pedir" autocomplete="off">
+        <label class="titular" for="campo">¿Cómo te llamas?</label>
+        <div class="fila">
+          <input id="campo" name="nombre" type="text" maxlength="40" placeholder="Tu nombre" enterkeyhint="go">
+          <button class="boton" type="submit">Entrar</button>
+        </div>
+        <p class="nota">Mejor con sonido: sacá el celular de silencio.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="pantalla" id="tocar" tabindex="-1" hidden>
+    <div class="marco">
+      <div class="cuerpo">
+        <p class="titular" id="saludo">Hola.</p>
+        <p class="lectura pista" id="pista">Tocá la pantalla</p>
+      </div>
+      <button class="boton ancho" id="seguirAgua" type="button" data-ir="invitacion">Seguir</button>
+    </div>
+  </section>
+
+  <section class="pantalla" id="invitacion" tabindex="-1" hidden>
+    <div class="marco">
+      <div class="cuerpo">
+        <p class="lectura">Si alguna de estas preguntas te quedó resonando, te invitamos a <span class="destacado">Habitar la pausa</span>, una experiencia inmersiva donde tus sentidos vuelven a conectarse con el presente.</p>
+      </div>
+      <button class="boton ancho" type="button" data-ir="fecha">Ver cuándo y dónde</button>
+    </div>
+  </section>
+
+  <section class="pantalla" id="fecha" tabindex="-1" hidden>
+    <div class="marco">
+      <div class="cuerpo">
+        <h2 class="titular">Miércoles 18 de noviembre</h2>
+        <p class="lectura">De 14 a 20 h</p>
+        <div class="donde">
+          <p class="lectura">Palacio Libertad</p>
+          <p class="lectura">Sala Inmersiva · Sarmiento 151, CABA</p>
+        </div>
+        <p class="lectura destacado">Entrada libre y gratuita</p>
+        <div class="acciones">
+          <a class="boton hueco" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Habitar%20la%20pausa&dates=20261118T170000Z%2F20261118T230000Z&location=Palacio%20Libertad%2C%20Sala%20Inmersiva%2C%20Sarmiento%20151%2C%20CABA&details=Una%20experiencia%20inmersiva%20donde%20tus%20sentidos%20vuelven%20a%20conectarse%20con%20el%20presente.">Agendar</a>
+          <a class="boton hueco" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Palacio%20Libertad%20Sarmiento%20151%20Buenos%20Aires">Cómo llegar</a>
+        </div>
+      </div>
+      <button class="boton ancho" type="button" data-ir="compartir">Seguir</button>
+    </div>
+  </section>
+
+  <section class="pantalla" id="compartir" tabindex="-1" hidden>
+    <div class="marco">
+      <div class="cuerpo">
+        <h2 class="titular">Algunas cosas no se descubren a solas. ¿Querés invitar a alguien?</h2>
+        <div class="acciones">
+          <a class="boton hueco" id="wa" target="_blank" rel="noopener" href="#">Invitar por WhatsApp</a>
+          <button class="boton hueco" id="copiar" type="button">Copiar link</button>
+        </div>
+        <p class="aviso" id="aviso" aria-live="polite"></p>
+      </div>
+      <button class="boton ancho" type="button" data-ir="gracias">Seguir</button>
+    </div>
+  </section>
+
+  <section class="pantalla" id="gracias" tabindex="-1" hidden>
+    <div class="marco">
+      <div class="cuerpo">
+        <h2 class="titular">¡Gracias!</h2>
+        <p class="lectura">Nos vemos en Palacio Libertad, Sala Inmersiva.</p>
+        <div class="cuenta" data-cuenta></div>
+      </div>
+      <button class="boton ancho" id="hacerPausa" type="button">Hacer la pausa</button>
+      <footer class="creditos">
+        <p>Habitar la pausa, una obra de</p>
+        <ul>
+          <li>Agus Altarrui</li>
+          <li>Anto D'Ambrosio</li>
+          <li>Maxi Morini</li>
+        </ul>
+      </footer>
+    </div>
+  </section>
+</main>
+
+<div id="pausa" hidden>
+  <p class="titular">Ahora sí, ya podés dejar el celular</p>
+  <button id="volver" type="button">Volver</button>
+</div>
+
+<script>
+(function(){
+  var LINK = "https://antdambrosio.github.io/habitar-la-pausa/";
+  var PREGUNTAS = [
+    "¿Dónde queda la imaginación si todo busca ser controlado?",
+    "¿Dónde queda la libertad si todo busca ser aprobado?",
+    "¿Dónde queda la conexión si la pantalla siempre está primero?",
+    "¿Y si la respuesta aparece cuando hacemos una pausa?"
+  ];
+  var INICIO = Date.UTC(2026,10,18,17,0,0), FIN = Date.UTC(2026,10,18,23,0,0); // 14 a 20 h de Buenos Aires
+  var calma = false;
+  try { calma = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+
+  // ---- nombre desde el link: ...#Juan_Perez -> "Hola, Juan Perez." ----
+  var saludo = document.getElementById('saludo');
+  function leerHash(){
+    try { return decodeURIComponent((location.hash || '').slice(1)).replace(/[_.~-]+/g,' ').trim(); }
+    catch(e){ return ''; }
+  }
+  function saludar(n){ saludo.textContent = n ? 'Hola, ' + n + '.' : 'Hola.'; }
+
+  // ---- countdown ----
+  var relojes = [];
+  function armarReloj(el){
+    var unidades = [];
+    [['Días'],['Horas'],['Minutos'],['Segundos']].forEach(function(u){
+      var d = document.createElement('div');
+      d.className = 'unidad';
+      d.innerHTML = '<div class="carta" aria-hidden="true"><div class="mitad sup"><span>00</span></div><div class="mitad inf"><span>00</span></div><div class="hoja sup"><span>00</span></div><div class="hoja inf"><span>00</span></div><i class="perno izq"></i><i class="perno der"></i></div><small>' + u[0] + '</small>';
+      el.appendChild(d);
+      var c = d.querySelector('.carta'), s = c.querySelectorAll('span');
+      unidades.push({carta:c, sup:s[0], inf:s[1], hojaS:s[2], hojaI:s[3], valor:null, t:0});
+    });
+    relojes.push({el:el, u:unidades});
+  }
+  function poner(u, v){
+    if (u.valor === v) return;
+    var viejo = u.valor === null ? v : u.valor;
+    u.valor = v;
+    u.sup.textContent = v;
+    if (calma || !u.carta.offsetParent || viejo === v){ u.inf.textContent = v; return; }
+    u.hojaS.textContent = viejo; u.hojaI.textContent = v;
+    u.carta.classList.remove('gira'); void u.carta.offsetWidth; u.carta.classList.add('gira');
+    clearTimeout(u.t);
+    u.t = setTimeout(function(){ u.inf.textContent = v; u.carta.classList.remove('gira'); }, 500);
+  }
+  function dos(n){ return (n < 10 ? '0' : '') + n; }
+  function contar(){
+    var ahora = Date.now(), txt = null;
+    if (ahora >= FIN) txt = 'Gracias por haber venido.';
+    else if (ahora >= INICIO) txt = 'Es hoy, ahora. Te esperamos hasta las 20 h.';
+    relojes.forEach(function(r){
+      if (txt){ r.el.className = 'cuenta texto lectura'; r.el.textContent = txt; return; }
+      var s = Math.floor((INICIO - ahora) / 1000);
+      poner(r.u[0], dos(Math.floor(s / 86400)));
+      poner(r.u[1], dos(Math.floor(s % 86400 / 3600)));
+      poner(r.u[2], dos(Math.floor(s % 3600 / 60)));
+      poner(r.u[3], dos(s % 60));
+    });
+  }
+  document.querySelectorAll('[data-cuenta]').forEach(armarReloj);
+  contar(); setInterval(contar, 1000);
+
+  // ---- invitar ----
+  var textoInvitar = 'Te invito a Habitar la pausa, una experiencia inmersiva para volver al presente y despertar los sentidos. Miércoles 18 de noviembre, de 14 a 20 h, Palacio Libertad, Sala Inmersiva. Entrada libre y gratuita. ' + LINK;
+  document.getElementById('wa').href = 'https://wa.me/?text=' + encodeURIComponent(textoInvitar);
+  var aviso = document.getElementById('aviso');
+  document.getElementById('copiar').addEventListener('click', function(){
+    var ok = function(){ aviso.textContent = 'Link copiado.'; };
+    var mal = function(){ aviso.textContent = LINK; };
+    try { navigator.clipboard.writeText(LINK).then(ok, mal); } catch(e){ mal(); }
+  });
+
+  // ---- sonido generado: agua filtrada, dos acordes lentos que se alternan, campanitas sueltas ----
+  var audio = null, muda = false, botonSonido = document.getElementById('sonido');
+  function desbloquearIOS(){
+    try {
+      var n = 8000, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+      function txt(o, s){ for (var i=0;i<s.length;i++) v.setUint8(o + i, s.charCodeAt(i)); }
+      txt(0,'RIFF'); v.setUint32(4, 36 + n, true); txt(8,'WAVE'); txt(12,'fmt ');
+      v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true);
+      v.setUint32(28,8000,true); v.setUint16(32,1,true); v.setUint16(34,8,true); txt(36,'data'); v.setUint32(40,n,true);
+      for (var i=0;i<n;i++) v.setUint8(44 + i, 128);
+      var el = document.createElement('audio'); el.loop = true; el.setAttribute('playsinline', '');
+      var bin = '', bytes = new Uint8Array(buf);
+      for (var b=0;b<bytes.length;b++) bin += String.fromCharCode(bytes[b]);
+      el.src = 'data:audio/wav;base64,' + btoa(bin);
+      el.volume = 0.01;
+      var p = el.play(); if (p && p.catch) p.catch(function(){});
+    } catch(e){}
+  }
+  var ACORDES = [[110,164.81,246.94,277.18],[92.5,138.59,207.65,220]];
+  var ESCALA = [880,987.77,1108.73,1318.51,1479.98,1760];
+  function acorde(notas){
+    if (!audio) return;
+    var ctx = audio.ctx, t = ctx.currentTime;
+    notas.forEach(function(f, i){
+      [-4, 4].forEach(function(cents){
+        var o = ctx.createOscillator(), a = ctx.createGain();
+        o.type = i === 0 ? 'sine' : 'triangle';
+        o.frequency.value = f; o.detune.value = cents;
+        a.gain.setValueAtTime(0, t);
+        a.gain.linearRampToValueAtTime(.055, t + 6);
+        a.gain.setValueAtTime(.055, t + 10);
+        a.gain.linearRampToValueAtTime(0, t + 18);
+        o.connect(a); a.connect(audio.pad);
+        o.start(t); o.stop(t + 18.2);
+      });
+    });
+  }
+  function campana(f, vol){
+    if (!audio) return;
+    var ctx = audio.ctx, t = ctx.currentTime;
+    [[1,1],[2.76,.22]].forEach(function(p){
+      var o = ctx.createOscillator(), a = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f * p[0];
+      a.gain.setValueAtTime(0, t);
+      a.gain.linearRampToValueAtTime(vol * p[1], t + .012);
+      a.gain.exponentialRampToValueAtTime(.0001, t + 2.6 / p[0]);
+      o.connect(a); a.connect(audio.eco);
+      o.start(t); o.stop(t + 2.8);
+    });
+  }
+  function nota(){ return ESCALA[Math.floor(Math.random() * ESCALA.length)]; }
+  function iniciarSonido(){
+    if (audio){ if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
+    desbloquearIOS();
+    var ctx = new AC();
+    var master = ctx.createGain(); master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(.8, ctx.currentTime + 3);
+    master.connect(ctx.destination);
+    var largo = ctx.sampleRate * 4, ruido = ctx.createBuffer(1, largo, ctx.sampleRate), d = ruido.getChannelData(0), ult = 0;
+    for (var i=0;i<largo;i++){ ult = (ult + .02 * (Math.random()*2 - 1)) / 1.02; d[i] = ult * 3.2; }
+    var fuente = ctx.createBufferSource(); fuente.buffer = ruido; fuente.loop = true;
+    var filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.frequency.value = 460;
+    var ola = ctx.createOscillator(), olaG = ctx.createGain(); ola.frequency.value = .09; olaG.gain.value = 190;
+    ola.connect(olaG); olaG.connect(filtro.frequency);
+    var aguaG = ctx.createGain(); aguaG.gain.value = .5;
+    fuente.connect(filtro); filtro.connect(aguaG); aguaG.connect(master);
+    fuente.start(); ola.start();
+    var pad = ctx.createBiquadFilter(); pad.type = 'lowpass'; pad.frequency.value = 820; pad.connect(master);
+    var eco = ctx.createGain(); eco.gain.value = 1;
+    var retardo = ctx.createDelay(1.5); retardo.delayTime.value = .46;
+    var vuelta = ctx.createGain(); vuelta.gain.value = .4;
+    eco.connect(master); eco.connect(retardo); retardo.connect(vuelta); vuelta.connect(retardo); retardo.connect(master);
+    audio = {ctx:ctx, master:master, pad:pad, eco:eco};
+    var turno = 0;
+    function siguienteAcorde(){ acorde(ACORDES[turno++ % 2]); }
+    siguienteAcorde(); setInterval(siguienteAcorde, 13000);
+    (function suelta(){
+      setTimeout(function(){ if (!enPausa) campana(nota(), .05); suelta(); }, 3500 + Math.random() * 6000);
+    })();
+    botonSonido.hidden = false;
+    if (ctx.resume) ctx.resume();
+  }
+  function volumen(v, seg){
+    if (!audio) return;
+    var a = audio.master.gain, t = audio.ctx.currentTime;
+    a.cancelScheduledValues(t); a.setValueAtTime(a.value, t); a.linearRampToValueAtTime(v, t + seg);
+  }
+  botonSonido.addEventListener('click', function(){
+    muda = !muda;
+    volumen(muda ? 0 : .8, .6);
+    botonSonido.textContent = muda ? 'Activar sonido' : 'Silenciar';
+  });
+
+  // ---- las mismas partículas para todas las criaturas ----
+  // colores: 0 blanco, 1 celeste, 2 verde agua, 3 lila, 4 magenta
+  var lienzo = document.getElementById('agua'), g = lienzo.getContext('2d');
+  var COLORES = ['#f2fbff','#86d8ff','#5fe6b4','#b9a2ff','#f06bd8'];
+  var W = 0, H = 0, DPR = 1, P = [], ondas = [];
+  var Z = {cx:0, cy:0, sx:0, sy:0, s:0, ok:false}, Zd = {cx:0, cy:0, sx:0, sy:0, s:0};
+  var T = {x:0, y:0, c:0};
+  var tiempo = 0, previo = 0, enPausa = false;
+  var MUEVE = 1.9, DEMORA = .9, DURA = 13;
+
+  function medir(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    lienzo.width = Math.round(W * DPR); lienzo.height = Math.round(H * DPR);
+    g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (actual) medirZona();
+  }
+  function sembrar(){
+    var n = window.innerWidth < 700 ? 2700 : 3600;
+    for (var i=0;i<n;i++) P.push({a:Math.random(), b:Math.random(), c:Math.random(), d:Math.random(), e:Math.random(), ox:0, oy:0, tam:Math.random() * .6 + 1.3});
+  }
+  function rotar(x, y, a){ var c = Math.cos(a), s = Math.sin(a); T.x = x * c - y * s; T.y = x * s + y * c; }
+
+  // tres mantas que nadan: alas triangulares que aletean, lóbulos y cola larga
+  function mantas(p, i, t){
+    var m = i % 3, e = Z.s * .5, margen = Math.max(.08, 1 - .82 * Z.s / Z.sy), carril = [-.72, .02, .72][m] * margen;
+    var fase = t * .17 + m * 2.3;
+    var px = Z.cx + Z.sx * .62 * Math.sin(fase);
+    var py = Z.cy + Z.sy * (carril + .1 * margen * Math.sin(t * .3 + m));
+    var rumbo = Math.atan2(Z.sy * .03 * margen * Math.cos(t * .3 + m), Z.sx * .105 * Math.cos(fase)) + Math.sin(t * .23 + m * 2) * .5;
+    var ala = Math.sin(t * 1.5 + m * 2.1), lx, ly;
+    if (p.a < .77){
+      var sp = Math.sqrt(p.b), lado = p.c < .5 ? -1 : 1, cu = Math.pow(1 - sp, .7) * .42;
+      lx = .2 - .52 * Math.pow(sp, 1.5) + (p.d * 2 - 1) * cu + ala * sp * sp * .13;
+      ly = lado * sp * (1 - .26 * Math.abs(ala) * sp);
+    } else if (p.a < .84){
+      lx = .56 + p.b * .14; ly = (p.c < .5 ? -1 : 1) * (.06 + p.d * .07);
+    } else {
+      var q = p.b;
+      lx = -.16 - q * 1.3; ly = Math.sin(t * 1.6 - q * 5 + m) * .07 * q + (p.d - .5) * .018;
+    }
+    rotar(lx * e, ly * e, rumbo);
+    T.x += px; T.y += py;
+    T.c = p.e < .56 ? 0 : (p.e < .84 ? 1 : 3);
+  }
+
+  // cinco flores sobre tallos largos, con el suelo curvo abajo
+  var FX = [-.82,-.3,.02,.36,.8], FY = [-.02,-.5,-.88,-.2,.14], FA = [.44,.52,.2,.44,.36], FC = [4,3,1,3,4];
+  function flores(p, i, t){
+    var k = i % 5, vaiven = Math.sin(t * .55 + k * 1.4) * .018, x, y;
+    if (p.a < .3){
+      var q = p.b;
+      x = FX[k] + vaiven * (1 - q) * 3 + (p.c - .5) * .018;
+      y = FY[k] + (.86 - FY[k]) * q;
+      T.c = p.d < .5 ? 2 : 1;
+    } else if (p.a < .84){
+      var xn = p.b * 2 - 1, cae = 1 - xn * xn;
+      x = FX[k] + xn * FA[k] + vaiven * 3 + Math.sin(xn * 8 + t * .7) * .012;
+      y = FY[k] - cae * .1 + (p.c - .5) * .1 * (.4 + cae) + Math.sin(xn * 9 + k) * .035 + Math.sin(t * .8 + k + xn * 2) * .014;
+      T.c = p.d < .72 ? FC[k] : 0;
+    } else {
+      var v = p.b * 2 - 1;
+      x = v * 1.02; y = .84 + v * v * .13 + (p.c - .5) * .05;
+      T.c = p.d < .6 ? 0 : 1;
+    }
+    T.x = Z.cx + x * Z.sx; T.y = Z.cy + y * Z.sy;
+  }
+
+  // la medusa que respira
+  function medusa(p, i, t){
+    var R = Z.s * .54, ola = (Math.sin(t * .85) + 1) / 2, b = Math.pow(ola, 1.6);
+    var gira = t * .1, incl = .3 + Math.sin(t * .21) * .07, ci = Math.cos(incl), si = Math.sin(incl);
+    var cx = Z.cx + Math.sin(t * .27) * R * .12, cy = Z.cy - Z.sy * .42 - b * R * .08, x3, y3, z3;
+    if (p.a < .72){
+      var u = Math.pow(p.b, .62), ua = u * 1.5708, an = p.c * 6.2832 + gira;
+      var rr = R * Math.pow(Math.sin(ua), .72) * (1 - .22 * b * u * u) + Math.sin(p.c * 50 + t * 1.2 + u * 6) * R * .014;
+      y3 = -R * .94 * (1 + .12 * b) * Math.cos(ua) + R * .1 * Math.pow(u, 4) * (1 - b);
+      x3 = rr * Math.cos(an); z3 = rr * Math.sin(an);
+      T.c = u > .86 ? (p.d < .55 ? 2 : 0) : (p.d < .72 ? 1 : 3);
+    } else {
+      var q = p.b, n = i % 15, oral = n < 5, ang = n / 15 * 6.2832 + gira, r0 = R * (oral ? .34 : .84) * (1 - .2 * b);
+      var L = R * (oral ? 1.3 : 1.7 + (n % 4) * .2) * (1 - .1 * b), dem = q * q * .7 + q * .3;
+      x3 = Math.cos(ang) * r0 * (1 - .5 * q) + Math.sin(t * .9 - q * 5 + n) * R * .2 * dem;
+      z3 = Math.sin(ang) * r0 * (1 - .5 * q) + Math.cos(t * .7 - q * 4 + n * 2) * R * .2 * dem;
+      y3 = L * q;
+      T.c = oral ? 3 : (p.d < .6 ? 1 : 2);
+    }
+    var y4 = y3 * ci - z3 * si, z4 = y3 * si + z3 * ci, f = 1 + z4 / (R * 7);
+    T.x = cx + x3 * f; T.y = cy + y4 * f;
+  }
+
+  // mariposa: dos pares de alas que se abren y cierran
+  function mariposa(p, i, t){
+    var e = Z.s * .86, ab = Math.abs(Math.cos(t * 1.9)) * .72 + .28, x, y;
+    var cx = Z.cx + Math.sin(t * .23) * Z.sx * .22, cy = Z.cy + Math.sin(t * .37) * Z.sy * .14;
+    if (p.a < .86){
+      var lado = p.b < .5 ? -1 : 1, arriba = p.c < .6, r = Math.sqrt(p.d), an = p.e * 6.2832;
+      var bx = arriba ? .55 : .4, by = arriba ? -.32 : .36, ra = arriba ? .54 : .36, rb = arriba ? .4 : .42;
+      x = bx + Math.cos(an) * r * ra; y = by + Math.sin(an) * r * rb;
+      x = Math.max(.03, x);
+      T.c = r > .84 ? 4 : (r > .5 ? 3 : 1);
+      x *= lado * ab;
+    } else if (p.a < .95){
+      x = (p.b - .5) * .05; y = -.38 + p.c * .9; T.c = 0;
+    } else {
+      var q = p.b, l = p.c < .5 ? -1 : 1;
+      x = l * (.03 + q * .26) * (.6 + ab * .4); y = -.38 - q * .36 - q * q * .1; T.c = 0;
+    }
+    rotar(x * e, y * e, Math.sin(t * .31) * .16);
+    T.x += cx; T.y += cy;
+  }
+
+  // al abrir la página las partículas salen de un cielo disperso
+  function cielo(p){
+    T.x = p.a * W; T.y = p.b * H; T.c = p.e < .7 ? 0 : 1;
+  }
+
+  // polvo: partículas chiquitas que caen despacio después de la pausa
+  function polvo(p, i, t){
+    T.x = p.a * W + Math.sin(t * .2 + p.d * 6.3) * 16;
+    T.y = (p.b * (H + 20) + t * (9 + p.c * 15)) % (H + 20) - 10;
+    T.c = p.e < .7 ? 0 : 1;
+  }
+
+  // cada partícula viaja de su lugar en una forma a su lugar en la otra, siempre como punto
+  var ESCENAS = [mantas, flores, medusa, mariposa];
+  var escena = 0, desde = cielo, hacia = mantas, cambio = 0;
+  var LARGO = MUEVE + DEMORA;
+  function pasarA(fn){
+    desde = hacia; hacia = fn; cambio = tiempo;
+  }
+  function siguienteEscena(){
+    if (tiempo - cambio < LARGO + .3) return;
+    escena = (escena + 1) % ESCENAS.length;
+    pasarA(ESCENAS[escena]);
+  }
+
+  function dibujar(ahora){
+    var dt = previo ? Math.min((ahora - previo) / 1000, .05) : .016; previo = ahora;
+    tiempo += dt * (calma ? .3 : 1);
+    if (!enPausa && tiempo - cambio > DURA) siguienteEscena();
+
+    if (Z.ok){
+      var kz = 1 - Math.pow(.08, dt);
+      Z.cx += (Zd.cx - Z.cx) * kz; Z.cy += (Zd.cy - Z.cy) * kz;
+      Z.sx += (Zd.sx - Z.sx) * kz; Z.sy += (Zd.sy - Z.sy) * kz; Z.s += (Zd.s - Z.s) * kz;
+    }
+
+    g.clearRect(0, 0, W, H);
+    var i, o, cajas = [];
+    for (i=0;i<COLORES.length*2;i++) cajas.push(new Path2D());
+    for (i=ondas.length-1;i>=0;i--){ o = ondas[i]; o.e += dt; if (o.e > o.vida) ondas.splice(i, 1); }
+
+    var el = tiempo - cambio, suelta = Math.pow(.08, dt);
+    for (i=0;i<P.length;i++){
+      var p = P[i], x, y, c;
+      // estrellitas sueltas que titilan por toda la pantalla
+      if (!enPausa && i % 7 === 0){
+        var luz = Math.sin(tiempo * (.6 + p.c) + p.d * 6.3);
+        cajas[luz > .3 ? (p.e < .7 ? 0 : 2) : (p.e < .7 ? 1 : 3)].rect(p.a * W, p.b * H, 1.2, 1.2);
+        continue;
+      }
+      var tr = (el - p.d * DEMORA) / MUEVE;
+      if (tr >= 1){
+        hacia(p, i, tiempo); x = T.x; y = T.y; c = T.c;
+      } else {
+        tr = tr < 0 ? 0 : tr;
+        var e = tr * tr * tr * (tr * (6 * tr - 15) + 10);
+        desde(p, i, tiempo); var ax = T.x, ay = T.y, ac = T.c;
+        hacia(p, i, tiempo);
+        var nube = Math.sin(e * 3.1416);
+        x = ax + (T.x - ax) * e + nube * (p.a - .5) * 46;
+        y = ay + (T.y - ay) * e + nube * (p.b - .5) * 46;
+        c = e > p.c ? T.c : ac;
+      }
+      for (var j=0;j<ondas.length;j++){
+        o = ondas[j];
+        var dx = x + p.ox - o.x, dy = y + p.oy - o.y, d = Math.sqrt(dx*dx + dy*dy) || 1, ra = o.e * 280, ba = Math.abs(d - ra);
+        if (ba < 60){ var fu = (1 - ba / 60) * 3.4 * (1 - o.e / o.vida); p.ox += dx / d * fu; p.oy += dy / d * fu; }
+      }
+      p.ox *= suelta; p.oy *= suelta;
+      if (enPausa){
+        if (i % 3) continue;
+        cajas[c * 2 + (p.c < .5 ? 1 : 0)].rect(x, y, 1.1, 1.1);
+      } else {
+        cajas[c * 2 + (p.c < .36 ? 1 : 0)].rect(x + p.ox, y + p.oy, p.tam, p.tam);
+      }
+    }
+    g.globalCompositeOperation = 'lighter';
+    for (i=0;i<cajas.length;i++){
+      g.globalAlpha = (i & 1) ? .6 : .95;
+      g.fillStyle = COLORES[i >> 1]; g.fill(cajas[i]);
+    }
+    g.globalAlpha = 1;
+    for (i=0;i<ondas.length;i++){
+      o = ondas[i];
+      g.strokeStyle = 'rgba(134,216,255,' + (.3 * (1 - o.e / o.vida)) + ')';
+      g.lineWidth = 1;
+      g.beginPath(); g.arc(o.x, o.y, Math.max(1, o.e * 280), 0, 6.2832); g.stroke();
+    }
+    requestAnimationFrame(dibujar);
+  }
+  function onda(x, y){
+    if (ondas.length > 3) ondas.shift();
+    ondas.push({x:x, y:y, e:0, vida:1.6});
+  }
+
+  // las criaturas siempre viven por encima del texto de la pantalla
+  function medirZona(){
+    var pant = pantalla(actual), pri = pant.querySelector('.marco').firstElementChild;
+    var tope = pri.getBoundingClientRect().top - 18, ini = 54;
+    tope = Math.max(tope, ini + 30);
+    Zd.cx = W / 2; Zd.cy = (ini + tope) / 2;
+    Zd.sx = Math.min(W * .44, 320); Zd.sy = (tope - ini) / 2;
+    Zd.s = Math.min(Zd.sx, Zd.sy * 1.05);
+    if (!Z.ok){ Z.cx = Zd.cx; Z.cy = Zd.cy; Z.sx = Zd.sx; Z.sy = Zd.sy; Z.s = Zd.s; Z.ok = true; }
+  }
+
+  // ---- navegación por pantallas ----
+  var historial = [], actual = null, cambiando = false, atras = document.getElementById('atras');
+  function pantalla(id){ return document.getElementById(id); }
+  function mostrarAtras(id){ atras.hidden = historial.length === 0 || id === 'tocar' || id === 'nombre'; }
+  function ir(id, volviendo){
+    if (cambiando || id === actual) return;
+    cambiando = true;
+    var ant = pantalla(actual), sig = pantalla(id);
+    if (!volviendo) historial.push(actual);
+    onda(W / 2, H * .72);
+    campana(nota(), .045);
+    siguienteEscena();
+    mostrarAtras(id);
+    if (actual === 'tocar') limpiarFlota();
+    ant.classList.remove('entra'); ant.classList.add('sale');
+    setTimeout(function(){
+      sig.hidden = false; sig.classList.remove('sale'); sig.classList.add('entra');
+      sig.focus({preventScroll:true});
+      ant.hidden = true; ant.classList.remove('sale');
+      actual = id; cambiando = false;
+      medirZona(); setTimeout(medirZona, 1000);
+    }, calma ? 20 : 330);
+  }
+  document.querySelectorAll('[data-ir]').forEach(function(b){
+    b.addEventListener('click', function(){ iniciarSonido(); ir(b.getAttribute('data-ir')); });
+  });
+  atras.addEventListener('click', function(){
+    if (historial.length) ir(historial.pop(), true);
+  });
+
+  // ---- pantalla de inicio ----
+  actual = 'nombre';
+  var yaSabe = leerHash();
+  if (yaSabe){
+    saludar(yaSabe);
+    pantalla('nombre').hidden = true;
+    pantalla('tocar').hidden = false;
+    actual = 'tocar';
+  }
+  document.getElementById('pedir').addEventListener('submit', function(e){
+    e.preventDefault();
+    var c = document.getElementById('campo');
+    c.blur();
+    saludar(c.value.trim());
+    iniciarSonido();
+    ir('tocar');
+  });
+
+  // ---- tocar el agua: una pregunta por vez, cuatro en total, y recién ahí aparece Seguir ----
+  var cualPregunta = 0, listaDesde = 0, flota = null, cambiandoFlota = false, flotas = document.getElementById('flotas'), seguirAgua = document.getElementById('seguirAgua'), pista = document.getElementById('pista');
+  function limpiarFlota(){
+    if (flota){ flota.remove(); flota = null; }
+  }
+  function mostrarPregunta(cx, cy){
+    var el = document.createElement('div'), ancho = Math.min(W - 48, 290);
+    el.className = 'flota';
+    el.textContent = PREGUNTAS[cualPregunta++];
+    el.style.width = ancho + 'px';
+    flotas.appendChild(el);
+    var alto = el.offsetHeight;
+    var maxY = saludo.getBoundingClientRect().top - alto - 18;
+    var x = Math.max(20, Math.min(W - ancho - 20, cx - ancho / 2));
+    var y = Math.max(78, Math.min(maxY, cy - alto / 2));
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    flota = el;
+    el.getBoundingClientRect();
+    el.classList.add('ver');
+    if (cualPregunta === PREGUNTAS.length){
+      pista.hidden = true;
+      seguirAgua.classList.add('ver');
+      listaDesde = Date.now();
+    }
+  }
+  window.addEventListener('pointerdown', function(e){
+    if (e.target.closest && e.target.closest('button,a,input,label,#pausa')) return;
+    iniciarSonido();
+    // después de la cuarta frase, tocar la pantalla es como apretar Seguir
+    if (actual === 'tocar' && cualPregunta >= PREGUNTAS.length){
+      if (Date.now() - listaDesde > 700) ir('invitacion');
+      return;
+    }
+    onda(e.clientX, e.clientY);
+    campana(nota(), .06);
+    if (actual !== 'tocar' || cambiandoFlota) return;
+    if (flota){
+      cambiandoFlota = true;
+      flota.classList.remove('ver'); flota.classList.add('va');
+      var cx = e.clientX, cy = e.clientY;
+      setTimeout(function(){
+        limpiarFlota();
+        mostrarPregunta(cx, cy);
+        cambiandoFlota = false;
+      }, 240);
+    } else {
+      mostrarPregunta(e.clientX, e.clientY);
+    }
+  });
+
+  // ---- hacer la pausa: oscuridad, una frase y partículas chiquitas flotando ----
+  var pausaEl = document.getElementById('pausa');
+  document.getElementById('hacerPausa').addEventListener('click', function(){
+    volumen(0, 3);
+    enPausa = true;
+    pasarA(polvo);
+    document.body.classList.add('en-pausa');
+    pausaEl.hidden = false;
+    pausaEl.getBoundingClientRect();
+    pausaEl.classList.add('ver');
+  });
+  document.getElementById('volver').addEventListener('click', function(){
+    enPausa = false;
+    escena = (escena + 1) % ESCENAS.length;
+    pasarA(ESCENAS[escena]);
+    document.body.classList.remove('en-pausa');
+    pausaEl.classList.remove('ver');
+    if (!muda) volumen(.8, 2);
+    setTimeout(function(){ pausaEl.hidden = true; }, 1500);
+  });
+
+  window.addEventListener('resize', medir);
+  medir(); sembrar(); medirZona();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(medirZona);
+  requestAnimationFrame(dibujar);
+
+})();
+</script>
+
+</body>
+</html>
